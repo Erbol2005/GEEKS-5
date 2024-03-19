@@ -1,11 +1,12 @@
 from rest_framework.generics import ListCreateAPIView
-from rest_framework.response import Response
-from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
 import random
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth.models import User
 
 from users.models import UserConfirmation
 from users.serializers import RegisterSerializer, ConfirmSerializer, LoginSerializer
@@ -28,6 +29,17 @@ class RegisterAPIView(ListCreateAPIView):
         confirm = UserConfirmation.objects.create(user=user, code=random.randint(100000, 999999))
         return Response({'code': confirm.code}, status=status.HTTP_201_CREATED)
 
+
+class RegisterUserView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            # Сохраняем пользователя
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # @api_view(['POST'])
 # def confirm(request):
